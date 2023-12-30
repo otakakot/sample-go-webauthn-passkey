@@ -21,9 +21,10 @@ func (s *ErrorResponse) SetMessage(val string) {
 	s.Message = val
 }
 
-func (*ErrorResponse) finalizeAssertionRes()     {}
-func (*ErrorResponse) initializeAssertionRes()   {}
-func (*ErrorResponse) initializeAttestationRes() {}
+func (*ErrorResponse) finalizeAssertionRes()         {}
+func (*ErrorResponse) initializeAssertionRes()       {}
+func (*ErrorResponse) initializeAttestationJSONRes() {}
+func (*ErrorResponse) initializeAttestationRes()     {}
 
 // ErrorResponseHeaders wraps ErrorResponse with response headers.
 type ErrorResponseHeaders struct {
@@ -292,6 +293,48 @@ func (s *InitializeAssertionResponse) SetData(val OptString) {
 }
 
 func (*InitializeAssertionResponse) initializeAssertionRes() {}
+
+type InitializeAttestationJSONOK struct {
+	Data io.Reader
+}
+
+// Read reads data from the Data reader.
+//
+// Kept to satisfy the io.Reader interface.
+func (s InitializeAttestationJSONOK) Read(p []byte) (n int, err error) {
+	if s.Data == nil {
+		return 0, io.EOF
+	}
+	return s.Data.Read(p)
+}
+
+// InitializeAttestationJSONOKHeaders wraps InitializeAttestationJSONOK with response headers.
+type InitializeAttestationJSONOKHeaders struct {
+	SetCookie OptString
+	Response  InitializeAttestationJSONOK
+}
+
+// GetSetCookie returns the value of SetCookie.
+func (s *InitializeAttestationJSONOKHeaders) GetSetCookie() OptString {
+	return s.SetCookie
+}
+
+// GetResponse returns the value of Response.
+func (s *InitializeAttestationJSONOKHeaders) GetResponse() InitializeAttestationJSONOK {
+	return s.Response
+}
+
+// SetSetCookie sets the value of SetCookie.
+func (s *InitializeAttestationJSONOKHeaders) SetSetCookie(val OptString) {
+	s.SetCookie = val
+}
+
+// SetResponse sets the value of Response.
+func (s *InitializeAttestationJSONOKHeaders) SetResponse(val InitializeAttestationJSONOK) {
+	s.Response = val
+}
+
+func (*InitializeAttestationJSONOKHeaders) initializeAttestationJSONRes() {}
 
 type InitializeAttestationOK struct {
 	Data io.Reader

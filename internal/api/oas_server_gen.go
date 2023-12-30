@@ -18,7 +18,7 @@ type Handler interface {
 	//
 	// Finalize Attestation.
 	//
-	// POST /attestatoin
+	// POST /attestation
 	FinalizeAttestation(ctx context.Context, req FinalizeAttestationReq, params FinalizeAttestationParams) (FinalizeAttestationRes, error)
 	// InitializeAssertion implements initializeAssertion operation.
 	//
@@ -30,8 +30,16 @@ type Handler interface {
 	//
 	// Initialize Attestation.
 	//
-	// GET /attestatoin
+	// GET /attestation
 	InitializeAttestation(ctx context.Context) (InitializeAttestationRes, error)
+	// InitializeAttestationJSON implements initializeAttestationJSON operation.
+	//
+	// Initialize Attestation JSON.
+	//
+	// Deprecated: schema marks this operation as deprecated.
+	//
+	// GET /attestation/json
+	InitializeAttestationJSON(ctx context.Context) (InitializeAttestationJSONRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

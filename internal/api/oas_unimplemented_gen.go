@@ -26,7 +26,7 @@ func (UnimplementedHandler) FinalizeAssertion(ctx context.Context, req OptFinali
 //
 // Finalize Attestation.
 //
-// POST /attestatoin
+// POST /attestation
 func (UnimplementedHandler) FinalizeAttestation(ctx context.Context, req FinalizeAttestationReq, params FinalizeAttestationParams) (r FinalizeAttestationRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
@@ -44,7 +44,18 @@ func (UnimplementedHandler) InitializeAssertion(ctx context.Context) (r Initiali
 //
 // Initialize Attestation.
 //
-// GET /attestatoin
+// GET /attestation
 func (UnimplementedHandler) InitializeAttestation(ctx context.Context) (r InitializeAttestationRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// InitializeAttestationJSON implements initializeAttestationJSON operation.
+//
+// Initialize Attestation JSON.
+//
+// Deprecated: schema marks this operation as deprecated.
+//
+// GET /attestation/json
+func (UnimplementedHandler) InitializeAttestationJSON(ctx context.Context) (r InitializeAttestationJSONRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

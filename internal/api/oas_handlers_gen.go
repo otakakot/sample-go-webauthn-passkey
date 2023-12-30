@@ -130,12 +130,12 @@ func (s *Server) handleFinalizeAssertionRequest(args [0]string, argsEscaped bool
 //
 // Finalize Attestation.
 //
-// POST /attestatoin
+// POST /attestation
 func (s *Server) handleFinalizeAttestationRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("finalizeAttestation"),
 		semconv.HTTPMethodKey.String("POST"),
-		semconv.HTTPRouteKey.String("/attestatoin"),
+		semconv.HTTPRouteKey.String("/attestation"),
 	}
 
 	// Start a span for this request.
@@ -338,12 +338,12 @@ func (s *Server) handleInitializeAssertionRequest(args [0]string, argsEscaped bo
 //
 // Initialize Attestation.
 //
-// GET /attestatoin
+// GET /attestation
 func (s *Server) handleInitializeAttestationRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
 	otelAttrs := []attribute.KeyValue{
 		otelogen.OperationID("initializeAttestation"),
 		semconv.HTTPMethodKey.String("GET"),
-		semconv.HTTPRouteKey.String("/attestatoin"),
+		semconv.HTTPRouteKey.String("/attestation"),
 	}
 
 	// Start a span for this request.
@@ -413,6 +413,95 @@ func (s *Server) handleInitializeAttestationRequest(args [0]string, argsEscaped 
 	}
 
 	if err := encodeInitializeAttestationResponse(response, w, span); err != nil {
+		recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
+// handleInitializeAttestationJSONRequest handles initializeAttestationJSON operation.
+//
+// Initialize Attestation JSON.
+//
+// Deprecated: schema marks this operation as deprecated.
+//
+// GET /attestation/json
+func (s *Server) handleInitializeAttestationJSONRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("initializeAttestationJSON"),
+		semconv.HTTPMethodKey.String("GET"),
+		semconv.HTTPRouteKey.String("/attestation/json"),
+	}
+
+	// Start a span for this request.
+	ctx, span := s.cfg.Tracer.Start(r.Context(), "InitializeAttestationJSON",
+		trace.WithAttributes(otelAttrs...),
+		serverSpanKind,
+	)
+	defer span.End()
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		elapsedDuration := time.Since(startTime)
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		s.duration.Record(ctx, float64(float64(elapsedDuration)/float64(time.Millisecond)), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	s.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	var (
+		recordError = func(stage string, err error) {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			s.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		err error
+	)
+
+	var response InitializeAttestationJSONRes
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    "InitializeAttestationJSON",
+			OperationSummary: "Initialize Attestation JSON",
+			OperationID:      "initializeAttestationJSON",
+			Body:             nil,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = InitializeAttestationJSONRes
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				response, err = s.h.InitializeAttestationJSON(ctx)
+				return response, err
+			},
+		)
+	} else {
+		response, err = s.h.InitializeAttestationJSON(ctx)
+	}
+	if err != nil {
+		recordError("Internal", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err := encodeInitializeAttestationJSONResponse(response, w, span); err != nil {
 		recordError("EncodeResponse", err)
 		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
 			s.cfg.ErrorHandler(ctx, w, r, err)

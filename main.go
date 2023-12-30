@@ -72,6 +72,37 @@ func main() {
 	}
 }
 
+var _ webauthn.User = (*User)(nil)
+
+type User struct {
+	ID string
+}
+
+// WebAuthnCredentials implements webauthn.User.
+func (us *User) WebAuthnCredentials() []webauthn.Credential {
+	return nil
+}
+
+// WebAuthnDisplayName implements webauthn.User.
+func (us *User) WebAuthnDisplayName() string {
+	return ""
+}
+
+// WebAuthnID implements webauthn.User.
+func (us *User) WebAuthnID() []byte {
+	return []byte(us.ID)
+}
+
+// WebAuthnIcon implements webauthn.User.
+func (us *User) WebAuthnIcon() string {
+	return ""
+}
+
+// WebAuthnName implements webauthn.User.
+func (us *User) WebAuthnName() string {
+	return ""
+}
+
 var _ api.Handler = (*Handler)(nil)
 
 type Handler struct {
@@ -229,33 +260,60 @@ func (hdl *Handler) FinalizeAssertion(ctx context.Context, req api.OptFinalizeAs
 	panic("unimplemented")
 }
 
-var _ webauthn.User = (*User)(nil)
+// InitializeAttestationJSON implements api.Handler.
+func (hdl *Handler) InitializeAttestationJSON(ctx context.Context) (api.InitializeAttestationJSONRes, error) {
+	options, session, err := hdl.webAuthn.BeginRegistration(&User{
+		ID: "passkey",
+	})
+	if err != nil {
+		return &api.ErrorResponse{
+			Message: fmt.Sprintf("failed to begin registration. error: %s", err),
+		}, nil
+	}
 
-type User struct {
-	ID string
-}
+	body, err := json.Marshal(options.Response)
+	if err != nil {
+		return &api.ErrorResponse{
+			Message: fmt.Sprintf("failed to marshal credential creation options. error: %s", err),
+		}, nil
+	}
 
-// WebAuthnCredentials implements webauthn.User.
-func (us *User) WebAuthnCredentials() []webauthn.Credential {
-	return nil
-}
+	jsonSession, err := json.Marshal(session)
+	if err != nil {
+		return &api.ErrorResponse{
+			Message: fmt.Sprintf("failed to marshal session. error: %s", err),
+		}, err
+	}
 
-// WebAuthnDisplayName implements webauthn.User.
-func (us *User) WebAuthnDisplayName() string {
-	return ""
-}
+	cipherSession := make([]byte, aes.BlockSize+len(jsonSession))
 
-// WebAuthnID implements webauthn.User.
-func (us *User) WebAuthnID() []byte {
-	return []byte(us.ID)
-}
+	iv := cipherSession[:aes.BlockSize]
 
-// WebAuthnIcon implements webauthn.User.
-func (us *User) WebAuthnIcon() string {
-	return ""
-}
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return &api.ErrorResponse{
+			Message: fmt.Sprintf("failed to read random. error: %s", err),
+		}, nil
+	}
 
-// WebAuthnName implements webauthn.User.
-func (us *User) WebAuthnName() string {
-	return ""
+	encryptStream := cipher.NewCTR(hdl.block, iv)
+
+	encryptStream.XORKeyStream(cipherSession[aes.BlockSize:], jsonSession)
+
+	cookie := http.Cookie{
+		Name:     "session",
+		Value:    base64.StdEncoding.EncodeToString(cipherSession),
+		Path:     "/",
+		Domain:   "",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+		MaxAge:   0,
+	}
+
+	return &api.InitializeAttestationJSONOKHeaders{
+		SetCookie: api.NewOptString(cookie.String()),
+		Response: api.InitializeAttestationJSONOK{
+			Data: bytes.NewReader(body),
+		},
+	}, nil
 }

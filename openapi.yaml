@@ -18,7 +18,7 @@ tags:
   - name: Passkey
     description: Passkey
 paths:
-  /attestatoin:
+  /attestation:
     description: https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_Assertion#attestation
     get:
       tags:
@@ -122,6 +122,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FinalizeAssertionResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /attestation/json:
+    description: https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_Assertion#attestation
+    get:
+      deprecated: true
+      tags:
+        - Passkey
+      summary: Initialize Attestation JSON
+      description: Initialize Attestation JSON
+      operationId: initializeAttestationJSON
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+          headers:
+            Set-Cookie:
+              description: Set-Cookie
+              schema:
+                type: string
         '500':
           description: Internal Server Error
           content:

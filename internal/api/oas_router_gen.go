@@ -79,15 +79,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 					return
 				}
-			case 't': // Prefix: "ttestatoin"
-				if l := len("ttestatoin"); len(elem) >= l && elem[0:l] == "ttestatoin" {
+			case 't': // Prefix: "ttestation"
+				if l := len("ttestation"); len(elem) >= l && elem[0:l] == "ttestation" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
 					switch r.Method {
 					case "GET":
 						s.handleInitializeAttestationRequest([0]string{}, elemIsEscaped, w, r)
@@ -98,6 +97,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 
 					return
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/json"
+					if l := len("/json"); len(elem) >= l && elem[0:l] == "/json" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "GET":
+							s.handleInitializeAttestationJSONRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
 				}
 			}
 		}
@@ -222,8 +241,8 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						return
 					}
 				}
-			case 't': // Prefix: "ttestatoin"
-				if l := len("ttestatoin"); len(elem) >= l && elem[0:l] == "ttestatoin" {
+			case 't': // Prefix: "ttestation"
+				if l := len("ttestation"); len(elem) >= l && elem[0:l] == "ttestation" {
 					elem = elem[l:]
 				} else {
 					break
@@ -232,25 +251,47 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "GET":
-						// Leaf: InitializeAttestation
 						r.name = "InitializeAttestation"
 						r.summary = "Initialize Attestation"
 						r.operationID = "initializeAttestation"
-						r.pathPattern = "/attestatoin"
+						r.pathPattern = "/attestation"
 						r.args = args
 						r.count = 0
 						return r, true
 					case "POST":
-						// Leaf: FinalizeAttestation
 						r.name = "FinalizeAttestation"
 						r.summary = "Finalize Attestation"
 						r.operationID = "finalizeAttestation"
-						r.pathPattern = "/attestatoin"
+						r.pathPattern = "/attestation"
 						r.args = args
 						r.count = 0
 						return r, true
 					default:
 						return
+					}
+				}
+				switch elem[0] {
+				case '/': // Prefix: "/json"
+					if l := len("/json"); len(elem) >= l && elem[0:l] == "/json" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							// Leaf: InitializeAttestationJSON
+							r.name = "InitializeAttestationJSON"
+							r.summary = "Initialize Attestation JSON"
+							r.operationID = "initializeAttestationJSON"
+							r.pathPattern = "/attestation/json"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
 					}
 				}
 			}

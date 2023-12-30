@@ -13,6 +13,10 @@ type InitializeAssertionRes interface {
 	initializeAssertionRes()
 }
 
+type InitializeAttestationJSONRes interface {
+	initializeAttestationJSONRes()
+}
+
 type InitializeAttestationRes interface {
 	initializeAttestationRes()
 }
