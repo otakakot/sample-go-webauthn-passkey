@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: passkey
+  description: |-
+    passkey
+  termsOfService: https://localhost:8080
+  contact:
+    email: kotaro.otaka@example.com
+  license:
+    name: MIT
+  version: 0.0.1
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Passkey
+    description: Passkey
+paths:
+  /attestatoin:
+    description: https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_Assertion#attestation
+    get:
+      tags:
+        - Passkey
+      summary: Initialize Attestation
+      description: Initialize Attestation
+      operationId: initializeAttestation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/x-msgpack:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Set-Cookie:
+              description: Set-Cookie
+              schema:
+                type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Passkey
+      summary: Finalize Attestation
+      description: Finalize Attestation
+      operationId: finalizeAttestation
+      parameters:
+        - name: session
+          in: cookie
+          description: session
+          required: true
+          schema:
+            type: string
+            example: session
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK
+          headers:
+            Set-Cookie:
+              description: Set-Cookie
+              schema:
+                type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          headers:
+            Set-Cookie:
+              description: Set-Cookie
+              schema:
+                type: string
+  /assertion:
+    description: https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API/Attestation_and_Assertion#assertion
+    get:
+      tags:
+        - Passkey
+      summary: Initialize Assertion
+      description: Initialize Assertion
+      operationId: initializeAssertion
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitializeAssertionResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - Passkey
+      summary: Finalize Assertion
+      description: Finalize Assertion
+      operationId: finalizeAssertion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinalizeAssertionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalizeAssertionResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    InitializeAssertionResponse:
+      type: object
+      properties:
+        data:
+          type: string
+    FinalizeAssertionRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        rawId:
+          type: string
+        response:
+          type: object
+          properties:
+            authenticatorData:
+              type: string
+            clientDataJSON:
+              type: string
+            signature:
+              type: string
+            userHandle:
+              type: string
+        type:
+          type: string
+    FinalizeAssertionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        rawId:
+          type: string
+        response:
+          type: object
+          properties:
+            authenticatorData:
+              type: string
+            clientDataJSON:
+              type: string
+            signature:
+              type: string
+            userHandle:
+              type: string
+        type:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
